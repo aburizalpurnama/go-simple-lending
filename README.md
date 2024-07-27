@@ -23,7 +23,7 @@ An ovesimplified lending service app
     GET /accounts/{id}
     ```
 
-2. Create Loan
+3. Create Loan
 
     Create loan for account with specified loan amount.
 
@@ -35,7 +35,7 @@ An ovesimplified lending service app
     }
     ```
 
-3. List of Loans
+4. List of Loans
 
     Get list of loans of account
 
@@ -43,7 +43,7 @@ An ovesimplified lending service app
     GET /accounts/{id}/loans
     ```
 
-4. List of Installments
+5. List of Installments
 
     Get list of all installments of account
 
@@ -51,7 +51,7 @@ An ovesimplified lending service app
     GET /accounts/{id}/installments
     ```
 
-5. Create Payment
+6. Create Payment
 
     Crate payment for account to adjusting loan amount.
 
@@ -63,7 +63,7 @@ An ovesimplified lending service app
     }
     ```
 
-6. List of Payments
+7. List of Payments
 
     Get list of all payments of account.
 
