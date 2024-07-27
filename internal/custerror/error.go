@@ -1,11 +1,23 @@
 package custerror
 
+import (
+	_errors "github.com/pkg/errors"
+)
+
 var _ error = new(Error)
 
 type Error struct {
 	HttpStatusCode int
 	Message        string
 	Err            error
+}
+
+func New(httpCode int, msg string, err error) error {
+	return _errors.WithStack(&Error{
+		HttpStatusCode: httpCode,
+		Message:        msg,
+		Err:            err,
+	})
 }
 
 func (e *Error) Error() string {
