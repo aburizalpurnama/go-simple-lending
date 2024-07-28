@@ -8,6 +8,14 @@ type Error struct {
 	Err            error
 }
 
+func New(httpCode int, msg string, err error) error {
+	return &Error{
+		HttpStatusCode: httpCode,
+		Message:        msg,
+		Err:            err,
+	}
+}
+
 func (e *Error) Error() string {
 	return e.Message
 }
