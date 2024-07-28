@@ -7,16 +7,16 @@ import (
 type (
 	CreateAccount struct {
 		Name  string `validate:"required" json:"name"`
-		Limit int    `validate:"required" json:"limit"`
+		Limit int    `validate:"required,gt=0" json:"limit"`
 	}
 
 	CreateLoan struct {
-		Amount int `validate:"required" json:"amount"`
-		Tenor  int `validate:"required" json:"tenor"`
+		Amount int `validate:"required,gt=0" json:"amount"`
+		Tenor  int `validate:"required,oneof=1 3 6 12 24" json:"tenor"`
 	}
 
 	CreatePayment struct {
-		Amount int `validate:"required" json:"amount"`
+		Amount int `validate:"required,gt=0" json:"amount"`
 	}
 )
 

@@ -19,6 +19,7 @@ type (
 		GetById(ctx context.Context, tx *gorm.DB, id int) (model.Installment, error)
 		GetListByLoanId(ctx context.Context, tx *gorm.DB, loanId int) ([]model.Installment, error)
 		GetListAciveByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Installment, error)
+		UpdateNonZeroField(ctx context.Context, tx *gorm.DB, installment model.Installment) error
 	}
 
 	installmentImpl struct{}
@@ -28,7 +29,7 @@ func NewInstallment() *installmentImpl {
 	return &installmentImpl{}
 }
 
-func (a *installmentImpl) Create(ctx context.Context, tx *gorm.DB, installment model.Installment) (int, error) {
+func (i *installmentImpl) Create(ctx context.Context, tx *gorm.DB, installment model.Installment) (int, error) {
 	err := tx.Create(&installment).Error
 	if err != nil {
 		return 0, _errors.WithStack(err)
@@ -37,7 +38,7 @@ func (a *installmentImpl) Create(ctx context.Context, tx *gorm.DB, installment m
 	return installment.Id, nil
 }
 
-func (a *installmentImpl) CreateBulk(ctx context.Context, tx *gorm.DB, installments []model.Installment) error {
+func (i *installmentImpl) CreateBulk(ctx context.Context, tx *gorm.DB, installments []model.Installment) error {
 	if len(installments) > 0 {
 		err := tx.CreateInBatches(installments, len(installments)).Error
 		if err != nil {
@@ -48,7 +49,7 @@ func (a *installmentImpl) CreateBulk(ctx context.Context, tx *gorm.DB, installme
 	return nil
 }
 
-func (a *installmentImpl) GetById(ctx context.Context, tx *gorm.DB, id int) (model.Installment, error) {
+func (i *installmentImpl) GetById(ctx context.Context, tx *gorm.DB, id int) (model.Installment, error) {
 	var installment model.Installment
 	err := tx.Model(&model.Installment{}).Where("id", id).First(&installment).Error
 	switch err {
@@ -61,7 +62,7 @@ func (a *installmentImpl) GetById(ctx context.Context, tx *gorm.DB, id int) (mod
 	}
 }
 
-func (a *installmentImpl) GetListByLoanId(ctx context.Context, tx *gorm.DB, loanId int) ([]model.Installment, error) {
+func (i *installmentImpl) GetListByLoanId(ctx context.Context, tx *gorm.DB, loanId int) ([]model.Installment, error) {
 	var installments []model.Installment
 	err := tx.Model(&model.Installment{}).Where("loan_id", loanId).Find(&installments).Error
 	if err != nil {
@@ -71,7 +72,7 @@ func (a *installmentImpl) GetListByLoanId(ctx context.Context, tx *gorm.DB, loan
 	return installments, nil
 }
 
-func (a *installmentImpl) GetListAciveByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Installment, error) {
+func (i *installmentImpl) GetListAciveByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Installment, error) {
 	sqlQuery := `SELECT i.* 
 	FROM installments i
 	JOIN loans l ON i.loan_id = l.id
@@ -87,4 +88,13 @@ func (a *installmentImpl) GetListAciveByAccountId(ctx context.Context, tx *gorm.
 	}
 
 	return installments, nil
+}
+
+func (i *installmentImpl) UpdateNonZeroField(ctx context.Context, tx *gorm.DB, installment model.Installment) error {
+	err := tx.Model(&installment).Updates(installment).Error
+	if err != nil {
+		return _errors.WithStack(err)
+	}
+
+	return nil
 }
