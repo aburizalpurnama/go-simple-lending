@@ -59,7 +59,7 @@ func (a *accountImpl) Create(c *fiber.Ctx) error {
 	}
 
 	err := a.db.Transaction(func(tx *gorm.DB) error {
-		id, err := a.accountRepo.Create(tx, account)
+		id, err := a.accountRepo.Create(c.Context(), tx, account)
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func (a *accountImpl) GetDetail(c *fiber.Ctx) error {
 
 	var account model.Account
 	err = a.db.Transaction(func(tx *gorm.DB) error {
-		a, err := a.accountRepo.GetById(tx, id)
+		a, err := a.accountRepo.GetById(c.Context(), tx, id)
 		if err != nil {
 			return err
 		}
