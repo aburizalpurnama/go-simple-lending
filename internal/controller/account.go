@@ -25,15 +25,17 @@ type (
 	accountImpl struct {
 		db          *gorm.DB
 		accountRepo repository.Account
+		loanRepo    repository.Loan
 		validate    *validator.Validate
 	}
 )
 
-func NewAccount(db *gorm.DB, validate *validator.Validate, accountRepo repository.Account) *accountImpl {
+func NewAccount(db *gorm.DB, validate *validator.Validate, accountRepo repository.Account, loanRepo repository.Loan) *accountImpl {
 	return &accountImpl{
 		db:          db,
 		validate:    validate,
 		accountRepo: accountRepo,
+		loanRepo:    loanRepo,
 	}
 }
 
@@ -100,14 +102,31 @@ func (a *accountImpl) GetDetail(c *fiber.Ctx) error {
 		})
 	}
 
-	var account model.Account
+	var resp response.GetAccount
 	err = a.db.Transaction(func(tx *gorm.DB) error {
-		a, err := a.accountRepo.GetById(c.Context(), tx, id)
+		account, err := a.accountRepo.GetById(c.Context(), tx, id)
 		if err != nil {
 			return err
 		}
 
-		account = a
+		loans, err := a.loanRepo.GetListByAccountId(c.Context(), tx, id)
+		if err != nil {
+			return err
+		}
+
+		var totalLoanAmount, totalPaidAmount int
+		for _, loan := range loans {
+			totalLoanAmount += loan.Amount
+			totalPaidAmount += loan.PaidAmount
+		}
+
+		osAmount := totalLoanAmount - totalPaidAmount
+
+		resp.Account = account
+		resp.AvailableLimit = account.Limit - osAmount
+		resp.TotalLoanAmount = totalLoanAmount
+		resp.TotalPaidAmount = totalPaidAmount
+		resp.TotalOutstandingAmount = osAmount
 
 		return nil
 	})
@@ -129,6 +148,6 @@ func (a *accountImpl) GetDetail(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(response.Base{
 		Description: "success",
-		Data:        account,
+		Data:        resp,
 	})
 }

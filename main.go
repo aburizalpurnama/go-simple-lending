@@ -25,13 +25,13 @@ func main() {
 	}
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
-	
+
 	accountRepo := repository.NewAccount()
 	loanRepo := repository.NewLoan()
 
 	loanUsecase := usecase.NewLoan(dbconn, accountRepo, loanRepo)
 
-	accountCtrl := controller.NewAccount(dbconn, validate, accountRepo)
+	accountCtrl := controller.NewAccount(dbconn, validate, accountRepo, loanRepo)
 	loanCtrl := controller.NewLoan(dbconn, validate, loanUsecase, loanRepo)
 
 	app := fiber.New(fiber.Config{
