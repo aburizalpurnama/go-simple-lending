@@ -11,7 +11,7 @@ type (
 	}
 
 	CreateLoan struct {
-		Limit int `validate:"required" json:"amount"`
+		Amount int `validate:"required" json:"amount"`
 	}
 
 	CreatePayment struct {

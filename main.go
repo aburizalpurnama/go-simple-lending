@@ -8,6 +8,7 @@ import (
 
 	"github.com/aburizalpurnama/go-simple-lending/internal/controller"
 	"github.com/aburizalpurnama/go-simple-lending/internal/repository"
+	"github.com/aburizalpurnama/go-simple-lending/internal/usecase"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
@@ -24,8 +25,14 @@ func main() {
 	}
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
+	
 	accountRepo := repository.NewAccount()
+	loanRepo := repository.NewLoan()
+
+	loanUsecase := usecase.NewLoan(dbconn, accountRepo, loanRepo)
+
 	accountCtrl := controller.NewAccount(dbconn, validate, accountRepo)
+	loanCtrl := controller.NewLoan(dbconn, validate, loanUsecase, loanRepo)
 
 	app := fiber.New(fiber.Config{
 		AppName: "simple-lending",
@@ -38,6 +45,10 @@ func main() {
 	account := app.Group("/accounts")
 	account.Post("/", accountCtrl.Create)
 	account.Get("/:id", accountCtrl.GetDetail)
+
+	loan := account.Group("/:id/loans")
+	loan.Post("/", loanCtrl.Create)
+	loan.Get("/", loanCtrl.GetListByAccount)
 
 	if err := app.Listen(":8089"); err != nil {
 		panic(err)
