@@ -28,11 +28,13 @@ func main() {
 
 	accountRepo := repository.NewAccount()
 	loanRepo := repository.NewLoan()
+	instRepo := repository.NewInstallment()
 
-	loanUsecase := usecase.NewLoan(dbconn, accountRepo, loanRepo)
+	loanUsecase := usecase.NewLoan(dbconn, accountRepo, loanRepo, instRepo)
 
 	accountCtrl := controller.NewAccount(dbconn, validate, accountRepo, loanRepo)
 	loanCtrl := controller.NewLoan(dbconn, validate, loanUsecase, loanRepo)
+	instCtrl := controller.NewInstallment(dbconn, validate, instRepo)
 
 	app := fiber.New(fiber.Config{
 		AppName: "simple-lending",
@@ -49,6 +51,8 @@ func main() {
 	loan := account.Group("/:id/loans")
 	loan.Post("/", loanCtrl.Create)
 	loan.Get("/", loanCtrl.GetListByAccount)
+
+	account.Get("/:id/installments", instCtrl.GetListByAccount)
 
 	if err := app.Listen(":8089"); err != nil {
 		panic(err)

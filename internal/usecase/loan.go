@@ -21,14 +21,16 @@ type (
 		db          *gorm.DB
 		accountRepo repository.Account
 		laonRepo    repository.Loan
+		instRepo    repository.Installment
 	}
 )
 
-func NewLoan(db *gorm.DB, accountRepo repository.Account, loanRepo repository.Loan) *loanImpl {
+func NewLoan(db *gorm.DB, accountRepo repository.Account, loanRepo repository.Loan, instRepo repository.Installment) *loanImpl {
 	return &loanImpl{
 		db:          db,
 		accountRepo: accountRepo,
 		laonRepo:    loanRepo,
+		instRepo:    instRepo,
 	}
 }
 
@@ -36,6 +38,7 @@ func (l *loanImpl) Create(ctx context.Context, accountId int, req request.Create
 	loan := model.Loan{
 		Amount:     req.Amount,
 		PaidAmount: 0,
+		Tenor:      req.Tenor,
 		Date:       time.Now().UTC(),
 		Status:     "active",
 		AccountId:  accountId,
@@ -62,6 +65,12 @@ func (l *loanImpl) Create(ctx context.Context, accountId int, req request.Create
 		}
 
 		loan.Id = id
+
+		installments := loan.GenerateInstallments()
+		err = l.instRepo.CreateBulk(ctx, tx, installments)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})

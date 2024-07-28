@@ -12,6 +12,7 @@ type (
 
 	CreateLoan struct {
 		Amount int `validate:"required" json:"amount"`
+		Tenor  int `validate:"required" json:"tenor"`
 	}
 
 	CreatePayment struct {
