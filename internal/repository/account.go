@@ -5,6 +5,7 @@ import (
 
 	"github.com/aburizalpurnama/go-simple-lending/internal/custerror"
 	"github.com/aburizalpurnama/go-simple-lending/internal/model"
+	_errors "github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -26,7 +27,7 @@ func NewAccount() *accountImpl {
 func (a *accountImpl) Create(tx *gorm.DB, account model.Account) (int, error) {
 	err := tx.Create(&account).Error
 	if err != nil {
-		return 0, err
+		return 0, _errors.WithStack(err)
 	}
 
 	return account.Id, nil
@@ -39,8 +40,8 @@ func (a *accountImpl) GetById(tx *gorm.DB, id int) (model.Account, error) {
 	case nil:
 		return account, nil
 	case gorm.ErrRecordNotFound:
-		return model.Account{}, custerror.New(http.StatusInternalServerError, "account not found", err)
+		return model.Account{}, custerror.New(http.StatusNotFound, "account not found", err)
 	default:
-		return model.Account{}, err
+		return model.Account{}, _errors.WithStack(err)
 	}
 }

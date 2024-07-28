@@ -4,8 +4,8 @@ import "github.com/aburizalpurnama/go-simple-lending/internal/model"
 
 type (
 	Base struct {
-		Status string `json:"status"`
-		Data   any
+		Description string `json:"description"`
+		Data        any    `json:"data"`
 	}
 
 	GetAccount struct {
