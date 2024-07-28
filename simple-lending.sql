@@ -15,6 +15,7 @@ CREATE TABLE "loans" (
   "paid_amount" numeric NOT NULL DEFAULT 0,
   "date" datetime NOT NULL DEFAULT (now() at time zone 'utc'),
   "status" statuses NOT NULL DEFAULT 'active',
+  "tenor" int NOT NULL,
   "account_id" int NOT NULL
 );
 
