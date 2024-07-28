@@ -18,6 +18,8 @@ type (
 		GetById(ctx context.Context, tx *gorm.DB, id int) (model.Loan, error)
 		GetListByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Loan, error)
 		GetTotalOustandingByAccountId(ctx context.Context, tx *gorm.DB, accountId int) (osAmount int, err error)
+		UpdateNonZeroField(ctx context.Context, tx *gorm.DB, loan model.Loan) error
+		GetListByIds(ctx context.Context, tx *gorm.DB, ids []int) ([]model.Loan, error)
 	}
 
 	loanImpl struct{}
@@ -36,6 +38,15 @@ func (a *loanImpl) Create(ctx context.Context, tx *gorm.DB, loan model.Loan) (in
 	return loan.Id, nil
 }
 
+func (a *loanImpl) UpdateNonZeroField(ctx context.Context, tx *gorm.DB, loan model.Loan) error {
+	err := tx.Model(&loan).Updates(loan).Error
+	if err != nil {
+		return _errors.WithStack(err)
+	}
+
+	return nil
+}
+
 func (a *loanImpl) GetById(ctx context.Context, tx *gorm.DB, id int) (model.Loan, error) {
 	var loan model.Loan
 	err := tx.Model(&model.Loan{}).Where("id", id).First(&loan).Error
@@ -52,6 +63,16 @@ func (a *loanImpl) GetById(ctx context.Context, tx *gorm.DB, id int) (model.Loan
 func (a *loanImpl) GetListByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Loan, error) {
 	var loans []model.Loan
 	err := tx.Model(&model.Loan{}).Where("account_id", accountId).Find(&loans).Error
+	if err != nil {
+		return nil, _errors.WithStack(err)
+	}
+
+	return loans, nil
+}
+
+func (a *loanImpl) GetListByIds(ctx context.Context, tx *gorm.DB, ids []int) ([]model.Loan, error) {
+	var loans []model.Loan
+	err := tx.Model(&model.Loan{}).Where("id IN ?", ids).Find(&loans).Error
 	if err != nil {
 		return nil, _errors.WithStack(err)
 	}

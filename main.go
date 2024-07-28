@@ -29,12 +29,15 @@ func main() {
 	accountRepo := repository.NewAccount()
 	loanRepo := repository.NewLoan()
 	instRepo := repository.NewInstallment()
+	paymentRepo := repository.NewPayment()
 
 	loanUsecase := usecase.NewLoan(dbconn, accountRepo, loanRepo, instRepo)
+	paymentUsecase := usecase.NewPayment(dbconn, accountRepo, loanRepo, instRepo, paymentRepo)
 
 	accountCtrl := controller.NewAccount(dbconn, validate, accountRepo, loanRepo)
 	loanCtrl := controller.NewLoan(dbconn, validate, loanUsecase, loanRepo)
 	instCtrl := controller.NewInstallment(dbconn, validate, instRepo)
+	paymentCtrl := controller.NewPayment(dbconn, validate, paymentUsecase, paymentRepo)
 
 	app := fiber.New(fiber.Config{
 		AppName: "simple-lending",
@@ -51,6 +54,10 @@ func main() {
 	loan := account.Group("/:id/loans")
 	loan.Post("/", loanCtrl.Create)
 	loan.Get("/", loanCtrl.GetListByAccount)
+
+	payment := account.Group("/:id/payments")
+	payment.Post("/", paymentCtrl.Create)
+	payment.Get("/", paymentCtrl.GetListByAccount)
 
 	account.Get("/:id/installments", instCtrl.GetListByAccount)
 

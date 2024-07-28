@@ -20,7 +20,7 @@ type (
 	loanImpl struct {
 		db          *gorm.DB
 		accountRepo repository.Account
-		laonRepo    repository.Loan
+		loanRepo    repository.Loan
 		instRepo    repository.Installment
 	}
 )
@@ -29,7 +29,7 @@ func NewLoan(db *gorm.DB, accountRepo repository.Account, loanRepo repository.Lo
 	return &loanImpl{
 		db:          db,
 		accountRepo: accountRepo,
-		laonRepo:    loanRepo,
+		loanRepo:    loanRepo,
 		instRepo:    instRepo,
 	}
 }
@@ -50,7 +50,7 @@ func (l *loanImpl) Create(ctx context.Context, accountId int, req request.Create
 			return err
 		}
 
-		osAmount, err := l.laonRepo.GetTotalOustandingByAccountId(ctx, tx, accountId)
+		osAmount, err := l.loanRepo.GetTotalOustandingByAccountId(ctx, tx, accountId)
 		if err != nil {
 			return err
 		}
@@ -59,7 +59,7 @@ func (l *loanImpl) Create(ctx context.Context, accountId int, req request.Create
 			return custerror.New(http.StatusBadRequest, "not enough limit", nil)
 		}
 
-		id, err := l.laonRepo.Create(ctx, tx, loan)
+		id, err := l.loanRepo.Create(ctx, tx, loan)
 		if err != nil {
 			return err
 		}
