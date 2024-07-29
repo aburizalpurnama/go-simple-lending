@@ -20,6 +20,7 @@ type (
 		GetListByLoanId(ctx context.Context, tx *gorm.DB, loanId int) ([]model.Installment, error)
 		GetListAciveByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Installment, error)
 		UpdateNonZeroField(ctx context.Context, tx *gorm.DB, installment model.Installment) error
+		GetListByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Installment, error)
 	}
 
 	installmentImpl struct{}
@@ -81,7 +82,24 @@ func (i *installmentImpl) GetListAciveByAccountId(ctx context.Context, tx *gorm.
 		AND l.account_id = ?
 	ORDER By i.due_date ASC;`
 
-	var installments []model.Installment
+	installments := []model.Installment{}
+	err := tx.Raw(sqlQuery, accountId).Scan(&installments).Error
+	if err != nil {
+		return nil, _errors.WithStack(err)
+	}
+
+	return installments, nil
+}
+
+func (i *installmentImpl) GetListByAccountId(ctx context.Context, tx *gorm.DB, accountId int) ([]model.Installment, error) {
+	sqlQuery := `SELECT i.* 
+	FROM installments i
+	JOIN loans l ON i.loan_id = l.id
+	WHERE 
+		l.account_id = ?
+	ORDER By i.due_date ASC;`
+
+	installments := []model.Installment{}
 	err := tx.Raw(sqlQuery, accountId).Scan(&installments).Error
 	if err != nil {
 		return nil, _errors.WithStack(err)

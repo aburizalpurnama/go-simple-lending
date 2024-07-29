@@ -45,12 +45,25 @@ func (a *installmentImpl) GetListByAccount(c *fiber.Ctx) error {
 		})
 	}
 
+	activeOnlyStr := c.Query("active_only", "true")
+	activeOnly, err := strconv.ParseBool(activeOnlyStr)
+	if err != nil {
+		activeOnly = true
+	}
+
 	var installments []model.Installment
 	err = a.db.Transaction(func(tx *gorm.DB) error {
 		var err error
-		installments, err = a.installmentRepo.GetListAciveByAccountId(c.Context(), tx, accountId)
-		if err != nil {
-			return err
+		if activeOnly {
+			installments, err = a.installmentRepo.GetListAciveByAccountId(c.Context(), tx, accountId)
+			if err != nil {
+				return err
+			}
+		} else {
+			installments, err = a.installmentRepo.GetListByAccountId(c.Context(), tx, accountId)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
