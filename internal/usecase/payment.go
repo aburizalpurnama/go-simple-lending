@@ -2,13 +2,12 @@ package usecase
 
 import (
 	"context"
-	"net/http"
 	"time"
 
-	"github.com/aburizalpurnama/go-simple-lending/internal/custerror"
 	"github.com/aburizalpurnama/go-simple-lending/internal/model"
 	"github.com/aburizalpurnama/go-simple-lending/internal/payload/request"
 	"github.com/aburizalpurnama/go-simple-lending/internal/repository"
+	_payment "github.com/aburizalpurnama/go-simple-lending/pkg/payment"
 	"gorm.io/gorm"
 )
 
@@ -25,8 +24,8 @@ type (
 		paymentRepo repository.Payment
 	}
 
-	loanId int
-	instId int
+	loanId        int
+	installmentId int
 )
 
 func NewPayment(db *gorm.DB, accountRepo repository.Account, loanRepo repository.Loan, instRepo repository.Installment, paymentRepo repository.Payment) *paymentImpl {
@@ -57,36 +56,12 @@ func (l *paymentImpl) Create(ctx context.Context, accountId int, req request.Cre
 			return err
 		}
 
-		adjustedLoanIds := []int{}
-		adjustedInstallmentIdSet := map[instId]any{}
-		loanAdjustMap := map[loanId]int{}
+		loanAdjustmentMap := map[int]int{}
+		adjustedInstallmentSet := map[int]any{}
 
-		remainingAmount := req.Amount
-		for i := range installments {
-			osAmount := (installments[i].Amount - installments[i].PaidAmount)
-			if remainingAmount > 0 && osAmount > 0 {
-				adjustmentAmount := osAmount
-				if remainingAmount < osAmount {
-					adjustmentAmount = remainingAmount
-				}
-
-				if _, ok := loanAdjustMap[loanId(installments[i].LoanId)]; ok {
-					loanAdjustMap[loanId(installments[i].LoanId)] += adjustmentAmount
-				} else {
-					loanAdjustMap[loanId(installments[i].LoanId)] = adjustmentAmount
-					adjustedLoanIds = append(adjustedLoanIds, installments[i].LoanId)
-				}
-
-				installments[i].PaidAmount += adjustmentAmount
-
-				adjustedInstallmentIdSet[instId(installments[i].Id)] = nil
-				remainingAmount -= adjustmentAmount
-			}
-
-		}
-
-		if remainingAmount > 0 {
-			return custerror.New(http.StatusBadRequest, "too much payment amount", nil)
+		adjustedLoanIds, err := _payment.AllocateAmount(ctx, installments, req.Amount, loanAdjustmentMap, adjustedInstallmentSet)
+		if err != nil {
+			return err
 		}
 
 		paymentId, err := l.paymentRepo.Create(ctx, tx, payment)
@@ -103,7 +78,7 @@ func (l *paymentImpl) Create(ctx context.Context, accountId int, req request.Cre
 			}
 
 			for _, loan := range loans {
-				if amount, ok := loanAdjustMap[loanId(loan.Id)]; ok {
+				if amount, ok := loanAdjustmentMap[loan.Id]; ok {
 					loan.PaidAmount += amount
 					if loan.PaidAmount == loan.Amount {
 						loan.Status = "paidoff"
@@ -118,7 +93,7 @@ func (l *paymentImpl) Create(ctx context.Context, accountId int, req request.Cre
 		}
 
 		for _, inst := range installments {
-			if _, ok := adjustedInstallmentIdSet[instId(inst.Id)]; ok {
+			if _, ok := adjustedInstallmentSet[inst.Id]; ok {
 				if inst.PaidAmount == inst.Amount {
 					inst.Status = "paidoff"
 				}
